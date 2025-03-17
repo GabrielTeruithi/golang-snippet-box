@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"snippetbox.gteruithi.com/internal/models"
 
 	_ "github.com/lib/pq"
 )
@@ -13,14 +14,15 @@ import (
 var DB *sql.DB
 
 type application struct {
-	logger *slog.Logger
+	logger 		*slog.Logger
+	snippets	*models.SnippetModel
 }
 
 func main() {
 	var err error
 
 	addr := flag.String("addr", ":4000", "HTTP network address")
-	dsn := flag.String("dsn", "host=localhost port=5432 user=web password=pass dbname=snippetbox sslmode=disable", "PostgreSQL connection string")
+	dsn := flag.String("dsn", "host=localhost port=5432 user=postgre password=password dbname=snippetbox sslmode=disable", "PostgreSQL connection string")
 	dbDriverName := flag.String("postgres", "postgres", "Database driver name")
 
 	flag.Parse()
@@ -38,6 +40,7 @@ func main() {
 
 	app := &application{
 		logger: logger,
+		snippets: &models.SnippetModel{DB: DB},
 	}
 
 	logger.Info("Starting server", slog.String("addr", ":4000"))
