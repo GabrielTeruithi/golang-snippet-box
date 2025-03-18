@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"html/template"
 	"path/filepath"
+	"time"
 
 	"snippetbox.gteruithi.com/internal/models"
 )
@@ -12,6 +13,14 @@ type templateData struct {
 	CurrentYear int
 	Snippet     models.Snippet
 	Snippets    []models.Snippet
+}
+
+func humanDate(t time.Time) string {
+	return t.Format("02 Jan 2006 at 15:04")
+}
+
+var functions = template.FuncMap{
+	"humanDate": humanDate,
 }
 
 func newTemplateCache() (map[string]*template.Template, error) {
