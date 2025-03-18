@@ -3,10 +3,12 @@ package main
 import (
 	"database/sql"
 	"flag"
+	"fmt"
 	"html/template"
 	"log/slog"
 	"net/http"
 	"os"
+
 	"snippetbox.gteruithi.com/internal/models"
 
 	_ "github.com/lib/pq"
@@ -41,6 +43,7 @@ func main() {
 	defer DB.Close()
 
 	templateCache, err := newTemplateCache()
+	fmt.Println(templateCache)
 	if err != nil {
 		logger.Error(err.Error())
 		os.Exit(1)

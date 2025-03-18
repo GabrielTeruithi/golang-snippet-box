@@ -2,10 +2,10 @@ package main
 
 import (
 	"errors"
-	"html/template"
 	"net/http"
-	"snippetbox.gteruithi.com/internal/models"
 	"strconv"
+
+	"snippetbox.gteruithi.com/internal/models"
 )
 
 func (app *application) home(w http.ResponseWriter, r *http.Request) {
@@ -17,26 +17,10 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	files := []string{
-		"./ui/html/base.html",
-		"./ui/html/pages/home.html",
-		"./ui/html/partials/nav.html",
-	}
+	data := app.newTemplateData(r)
+	data.Snippets = snippets
 
-	ts, err := template.ParseFiles(files...)
-	if err != nil {
-		app.serverError(w, r, err)
-		return
-	}
-
-	data := templateData{
-		Snippets: snippets,
-	}
-
-	err = ts.ExecuteTemplate(w, "base", data)
-	if err != nil {
-		app.serverError(w, r, err)
-	}
+	app.render(w, r, http.StatusOK, "home.html", data)
 }
 
 func (app *application) getSnippetView(w http.ResponseWriter, r *http.Request) {
@@ -57,26 +41,10 @@ func (app *application) getSnippetView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	files := []string{
-		"./ui/html/base.html",
-		"./ui/html/partials/nav.html",
-		"./ui/html/pages/view.html",
-	}
+	data := app.newTemplateData(r)
+	data.Snippet = snippet
 
-	ts, err := template.ParseFiles(files...)
-	if err != nil {
-		app.serverError(w, r, err)
-		return
-	}
-
-	data := templateData{
-		Snippet: snippet,
-	}
-
-	err = ts.ExecuteTemplate(w, "base", data)
-	if err != nil {
-		app.serverError(w, r, err)
-	}
+	app.render(w, r, http.StatusOK, "view.html", data)
 }
 
 func (app *application) getSnippetCreate(w http.ResponseWriter, r *http.Request) {
@@ -86,7 +54,7 @@ func (app *application) getSnippetCreate(w http.ResponseWriter, r *http.Request)
 func (app *application) postSnippetCreate(w http.ResponseWriter, r *http.Request) {
 
 	title := "O snail"
-	content := "O snail\nClimb Mount Fuji, \n But slowly, slowly!\n\n- Kobayashi Issa"
+	content := "O snail \n Climb Mount Fuji, \n But slowly, slowly! \n \n- Kobayashi Issa"
 
 	err := app.snippets.Insert(title, content)
 
