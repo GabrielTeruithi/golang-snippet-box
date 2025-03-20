@@ -17,10 +17,11 @@ type SnippetModel struct {
 	DB *sql.DB
 }
 
-func (m *SnippetModel) Insert(title string, content string) error {
-	stmt := `INSERT INTO snippets (title, content, created,expires) VALUES ($1, $2, NOW(), CURRENT_DATE + INTERVAL '1month')`
+func (m *SnippetModel) Insert(title string, content string, expires int) error {
+	expireFormated := time.Now().AddDate(0, 0, expires)
+	stmt := `INSERT INTO snippets (title, content, created, expires) VALUES ($1, $2, NOW(), $3)`
 
-	_, err := m.DB.Exec(stmt, title, content)
+	_, err := m.DB.Exec(stmt, title, content, expireFormated)
 	if err != nil {
 		return err
 	}
