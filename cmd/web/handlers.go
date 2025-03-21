@@ -4,17 +4,16 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
-	"strings"
-	"unicode/utf8"
 
 	"snippetbox.gteruithi.com/internal/models"
+	"snippetbox.gteruithi.com/internal/validator"
 )
 
 type snippetCreateForm struct {
-	Title       string
-	Content     string
-	Expires     int
-	FieldErrors map[string]string
+	Title   string
+	Content string
+	Expires int
+	validator.Validator
 }
 
 func (app *application) home(w http.ResponseWriter, r *http.Request) {
@@ -65,48 +64,27 @@ func (app *application) getSnippetCreate(w http.ResponseWriter, r *http.Request)
 
 func (app *application) postSnippetCreate(w http.ResponseWriter, r *http.Request) {
 
-	err := r.ParseForm()
+	var form snippetCreateForm
+
+	err := app.decodePostForm(r, &form)
 	if err != nil {
 		app.clientError(w, http.StatusBadRequest)
 		return
 	}
 
-	expires, err := strconv.Atoi(r.PostForm.Get("expires"))
-	if err != nil {
-		app.clientError(w, http.StatusBadRequest)
-		return
-	}
+	form.CheckField(validator.NotBlank(form.Title), "title", "Title cannot be blank")
+	form.CheckField(validator.MaxChars(form.Title, 100), "title", "Title cannot be more than 100 characters long")
+	form.CheckField(validator.NotBlank(form.Content), "content", "This field cannot be blank")
+	form.CheckField(validator.PermittedValue(form.Expires, 1, 7, 365), "expires", "This field must equal 1, 7 or 365 days")
 
-	form := snippetCreateForm{
-		Title:       r.PostForm.Get("title"),
-		Content:     r.PostForm.Get("content"),
-		Expires:     expires,
-		FieldErrors: make(map[string]string),
-	}
-
-	if strings.TrimSpace(form.Title) == "" {
-		form.FieldErrors["title"] = "Title cannot be blank"
-	} else if utf8.RuneCountInString(form.Title) > 100 {
-		form.FieldErrors["title"] = "Title cannot be longer than 100 characters"
-	}
-
-	if strings.TrimSpace(form.Content) == "" {
-		form.FieldErrors["content"] = "Content cannot be blank"
-	}
-
-	if form.Expires != 1 && form.Expires != 7 && form.Expires != 365 {
-		form.FieldErrors["expires"] = "Expiry must be 1, 7 or 365 days"
-	}
-
-	if len(form.FieldErrors) > 0 {
+	if !form.Valid() {
 		data := app.newTemplateData(r)
 		data.Form = form
 		app.render(w, r, http.StatusBadRequest, "create.html", data)
 		return
 	}
 
-	err = app.snippets.Insert(form.Title, form.Content, expires)
-
+	err = app.snippets.Insert(form.Title, form.Content, form.Expires)
 	if err != nil {
 		app.serverError(w, r, err)
 		return

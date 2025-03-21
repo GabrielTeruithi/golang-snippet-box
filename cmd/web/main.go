@@ -3,7 +3,6 @@ package main
 import (
 	"database/sql"
 	"flag"
-	"fmt"
 	"html/template"
 	"log/slog"
 	"net/http"
@@ -11,6 +10,7 @@ import (
 
 	"snippetbox.gteruithi.com/internal/models"
 
+	"github.com/go-playground/form/v4"
 	_ "github.com/lib/pq"
 )
 
@@ -20,6 +20,7 @@ type application struct {
 	logger        *slog.Logger
 	snippets      *models.SnippetModel
 	templateCache map[string]*template.Template
+	formDecoder   *form.Decoder
 }
 
 func main() {
@@ -43,16 +44,18 @@ func main() {
 	defer DB.Close()
 
 	templateCache, err := newTemplateCache()
-	fmt.Println(templateCache)
 	if err != nil {
 		logger.Error(err.Error())
 		os.Exit(1)
 	}
 
+	formDecoder := form.NewDecoder()
+
 	app := &application{
 		logger:        logger,
 		snippets:      &models.SnippetModel{DB: DB},
 		templateCache: templateCache,
+		formDecoder:   formDecoder,
 	}
 
 	logger.Info("Starting server", slog.String("addr", ":4000"))
